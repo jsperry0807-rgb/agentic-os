@@ -291,6 +291,20 @@ ok "  Full extraction:  designlang <url> --screenshots --dark --depth 2"
 ok "  Quick tokens:     designlang <url> --json-pretty"
 ok "  MCP server:       designlang mcp --output-dir \$HOME/design-extract-output"
 
+# ── Step 12: Matt Pocock Skills ──────────────────────────
+info "Installing Matt Pocock skills (grill-with-docs, TDD, planning, etc.)..."
+
+if [ -f "$HOME/.agents/skills/grill-with-docs/SKILL.md" ]; then
+    ok "Matt Pocock skills already installed (found grill-with-docs)"
+else
+    npx skills add mattpocock/skills --yes --global 2>&1 | tail -5
+    if [ -f "$HOME/.agents/skills/grill-with-docs/SKILL.md" ]; then
+        ok "Matt Pocock skills installed (14 skills: grill-with-docs, tdd, diagnose, etc.)"
+    else
+        warn "Matt Pocock skills install failed — try: npx skills add mattpocock/skills --yes --global"
+    fi
+fi
+
 # ── Done ──────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -313,6 +327,8 @@ echo "     Viewer:                http://localhost:3113"
 echo "  8. Design:   designlang <url>   (extract design system from any website)"
 echo "     MCP:      designlang mcp --output-dir ~/design-extract-output"
 echo "     Skill:    Ask OpenCode: 'extract design from <url>'"
+echo "  9. Planning: /grill-with-docs  (stress-test plans against domain model)"
+echo "     More:     /grill-me, /tdd, /diagnose, /to-prd, /prototype, +9 more"
 echo ""
 echo "  Memory-backed agent handoff active:"
 echo "     Hermes saves session summaries → agentmemory"
