@@ -177,8 +177,15 @@ if command -v playwright-mcp &> /dev/null; then
       playwright-mcp install-browser 2>&1 | tail -5
     ok "Playwright browsers installed"
 else
-    warn "playwright-mcp not found — install it: npm install -g @playwright/mcp"
-    warn "  then re-run: playwright-mcp install-browser"
+    info "Installing @playwright/mcp package..."
+    npm install -g @playwright/mcp 2>&1 | tail -3
+    if command -v playwright-mcp &> /dev/null; then
+        PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="${PLAYWRIGHT_HOST_PLATFORM_OVERRIDE:-ubuntu24.04-x64}" \
+          playwright-mcp install-browser 2>&1 | tail -5
+        ok "Playwright browsers installed"
+    else
+        warn "@playwright/mcp install failed — try manually: npm install -g @playwright/mcp"
+    fi
 fi
 
 # Make all hermes scripts executable
