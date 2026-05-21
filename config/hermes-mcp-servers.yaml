@@ -1,0 +1,8 @@
+# ── MCP Servers ────────────────────────────────────────────────────
+# Add this section to your ~/.hermes/config.yaml
+# (or merge with any existing mcp_servers: section)
+mcp_servers:
+  agentmemory:
+    command: npx
+    args: ["-y", "@agentmemory/mcp"]
+    enabled: true

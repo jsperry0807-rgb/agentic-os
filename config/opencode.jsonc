@@ -25,6 +25,11 @@
         "x-consumer-api-key": "{env:COMPOSIO_API_KEY}"
       },
       "enabled": true
+    },
+    "agentmemory": {
+      "type": "local",
+      "command": ["npx", "-y", "@agentmemory/mcp"],
+      "enabled": true
     }
   }
 }
