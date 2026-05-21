@@ -17,6 +17,14 @@
       "command": ["playwright-mcp"],
       "args": ["--headless", "--no-sandbox"],
       "enabled": true
+    },
+    "composio": {
+      "type": "remote",
+      "url": "https://connect.composio.dev/mcp",
+      "headers": {
+        "x-consumer-api-key": "{env:COMPOSIO_API_KEY}"
+      },
+      "enabled": true
     }
   }
 }

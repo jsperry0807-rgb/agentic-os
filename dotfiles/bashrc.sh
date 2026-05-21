@@ -25,6 +25,12 @@ if [ -d "$FIREFOX_LIB_DIR/libnspr4.so" ] && [[ ":$LD_LIBRARY_PATH:" != *":$FIREF
 fi
 unset FIREFOX_LIB_DIR
 
+# Composio — Tool Integrations for AI Agents
+# Get your API key at https://dashboard.composio.dev (Settings → API Keys)
+export COMPOSIO_API_KEY="${COMPOSIO_API_KEY:-}"
+# Composio CLI (installed by install.sh)
+export PATH="$HOME/.composio/bin:$PATH"
+
 # Auto-start tmux (if not already inside tmux and in an interactive shell)
 if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ -n "$PS1" ]; then
     tmux new-session -A -s main

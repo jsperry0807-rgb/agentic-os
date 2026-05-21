@@ -108,7 +108,31 @@ fi
 chmod +x "$SCRIPT_DIR/hermes/web-research.js" 2>/dev/null && ok "web-research.js is executable"
 ln -sf "$SCRIPT_DIR/hermes/web-research.js" "$HOME/.local/bin/web-research" 2>/dev/null && ok "web-research symlinked to ~/.local/bin/web-research"
 
-# ── Step 5: tmux config ──────────────────────────────────
+# ── Step 5: Composio CLI ─────────────────────────────────
+info "Installing Composio CLI for tool integrations..."
+
+if command -v composio &> /dev/null; then
+    ok "Composio CLI already installed: $(composio --version 2>&1 | head -1)"
+else
+    COMPOSIO_VERSION="${COMPOSIO_VERSION:-@composio/cli@0.2.31-beta.256}"
+    COMPOSIO_URL="https://github.com/ComposioHQ/composio/releases/download/${COMPOSIO_VERSION}/composio-linux-x64.zip"
+    COMPOSIO_BIN_DIR="$HOME/.composio/bin"
+    mkdir -p "$COMPOSIO_BIN_DIR"
+    if command -v python3 &> /dev/null; then
+        curl -fsSL -o /tmp/composio.zip "$COMPOSIO_URL" 2>/dev/null \
+          && python3 -c "import zipfile; zipfile.ZipFile('/tmp/composio.zip').extractall('/tmp/composio-extract')" 2>/dev/null \
+          && cp /tmp/composio-extract/composio-linux-x64/composio "$COMPOSIO_BIN_DIR/" \
+          && chmod +x "$COMPOSIO_BIN_DIR/composio" \
+          && ok "Composio CLI installed to $COMPOSIO_BIN_DIR/composio" \
+          || warn "Composio CLI install failed — install manually: curl -fsSL https://composio.dev/install | bash"
+        rm -rf /tmp/composio.zip /tmp/composio-extract
+    else
+        warn "python3 required for Composio CLI install — install manually: curl -fsSL https://composio.dev/install | bash"
+    fi
+fi
+ok "Composio ready. Login with: composio login (or set COMPOSIO_API_KEY for Connect MCP)"
+
+# ── Step 6: tmux config ──────────────────────────────────
 info "Installing tmux config..."
 
 TMUX_CONF_SRC="$SCRIPT_DIR/dotfiles/tmux.conf"
@@ -121,7 +145,7 @@ if [ -f "$TMUX_CONF_SRC" ]; then
     fi
 fi
 
-# ── Step 6: bashrc additions ─────────────────────────────
+# ── Step 7: bashrc additions ─────────────────────────────
 if [ "$1" == "--bashrc" ]; then
     info "Adding bashrc entries..."
 
