@@ -9,3 +9,6 @@ wiki/raw/*
 
 # Local overrides
 *.local
+
+# Secrets — API keys, set by install.sh prompt
+.env

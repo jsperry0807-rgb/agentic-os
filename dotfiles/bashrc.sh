@@ -3,6 +3,11 @@
 # Appended by ~/agentic-os/install.sh
 # ============================================
 
+# Load secrets (API keys) — created by install.sh, never committed
+if [ -f "$HOME/agentic-os/.env" ]; then
+    set -a; source "$HOME/agentic-os/.env"; set +a
+fi
+
 # Agentic OS scripts
 export PATH="$PATH:$HOME/agentic-os/hermes"
 

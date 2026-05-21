@@ -155,7 +155,51 @@ else
 fi
 ok "Composio ready. Login with: composio login (or set COMPOSIO_API_KEY for Connect MCP)"
 
-# ── Step 7: Evolution Heartbeat (cron) ────────────────────
+# ── Step 7: API Keys ──────────────────────────────────────
+info "Setting up API keys..."
+ENV_FILE="$SCRIPT_DIR/.env"
+
+prompt_api_key() {
+    local var_name="$1"
+    local description="$2"
+    local default="${3:-}"
+
+    if [ -n "$default" ]; then
+        warn "$var_name already set (from .env or environment)"
+        return
+    fi
+
+    echo ""
+    echo -e "  ${CYAN}$description${NC}"
+    echo -n "  Enter $var_name (leave blank to skip): "
+    read -r input_key
+    echo ""
+
+    if [ -n "$input_key" ]; then
+        echo "${var_name}=${input_key}" >> "$ENV_FILE"
+        export "${var_name}=${input_key}"
+        ok "$var_name saved to .env"
+    else
+        warn "$var_name skipped — set later in $ENV_FILE or export it in ~/.bashrc"
+    fi
+}
+
+# Load existing .env values to avoid re-prompting
+if [ -f "$ENV_FILE" ]; then
+    set -a; source "$ENV_FILE"; set +a
+fi
+
+# Check env/terminal for existing values
+CURRENT_COMPOSIO="${COMPOSIO_API_KEY:-}"
+prompt_api_key "COMPOSIO_API_KEY" "Composio API key (needed for tool integrations: GitHub, Gmail, Slack via MCP)" "$CURRENT_COMPOSIO"
+
+# Secure the .env file
+if [ -f "$ENV_FILE" ]; then
+    chmod 600 "$ENV_FILE"
+    ok ".env secured (chmod 600)"
+fi
+
+# ── Step 8: Evolution Heartbeat (cron) ────────────────────
 info "Setting up Evolution Heartbeat cron job..."
 
 HEARTBEAT_SCRIPT="$SCRIPT_DIR/hermes/evolution-heartbeat.sh"
@@ -176,7 +220,7 @@ else
     warn "  Or add to your own scheduler (systemd timers, launchd, etc.)"
 fi
 
-# ── Step 8: tmux config ──────────────────────────────────
+# ── Step 9: tmux config ──────────────────────────────────
 info "Installing tmux config..."
 
 TMUX_CONF_SRC="$SCRIPT_DIR/dotfiles/tmux.conf"
@@ -189,7 +233,7 @@ if [ -f "$TMUX_CONF_SRC" ]; then
     fi
 fi
 
-# ── Step 9: bashrc additions ─────────────────────────────
+# ── Step 10: bashrc additions ─────────────────────────────
 if [ "$1" == "--bashrc" ]; then
     info "Adding bashrc entries..."
 
