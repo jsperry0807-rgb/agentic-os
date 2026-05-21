@@ -1,0 +1,11 @@
+# Agentic OS — gitignore
+
+# OS junk
+.DS_Store
+Thumbs.db
+
+# Wiki raw sources (user-managed, not versioned by default)
+wiki/raw/*
+
+# Local overrides
+*.local

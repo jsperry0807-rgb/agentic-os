@@ -1,0 +1,16 @@
+{
+  // Agentic OS — OpenCode Configuration
+  // Portable: works on any machine with hermes on $PATH
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    "oh-my-openagent@latest"
+  ],
+  "lsp": true,
+  "mcp": {
+    "hermes": {
+      "type": "local",
+      "command": ["hermes", "mcp", "serve"],
+      "enabled": true
+    }
+  }
+}
