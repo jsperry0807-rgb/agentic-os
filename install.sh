@@ -3,7 +3,7 @@ set -euo pipefail
 
 # Agentic OS — Portable Installer
 # Clones the agent stack: OpenCode + OhMyOpenCode + Hermes + LLM Wiki
-# Usage: ./install.sh [--bashrc] [--help]
+# Usage: ./install.sh [--bashrc] [--zshrc] [--bootstrap] [--help]
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 export PATH="$HOME/.local/bin:$HOME/.opencode/bin:$PATH"
@@ -15,6 +15,47 @@ info()  { echo -e "${CYAN}==>${NC} $1"; }
 ok()    { echo -e "${GREEN}  ✓${NC} $1"; }
 warn()  { echo -e "${YELLOW}  !${NC} $1"; }
 err()   { echo -e "${RED}  ✗${NC} $1"; }
+
+# ── Parse flags ─────────────────────────────────────────
+BOOTSTRAP=false
+DOT_BASHRC=false
+DOT_ZSHRC=false
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --bashrc)    DOT_BASHRC=true; shift ;;
+        --zshrc)     DOT_ZSHRC=true; shift ;;
+        --bootstrap) BOOTSTRAP=true; shift ;;
+        --help|-h)   echo "Usage: ./install.sh [--bashrc] [--zshrc] [--bootstrap]"; exit 0 ;;
+        *)           shift ;;  # ignore unknown
+    esac
+done
+
+# ── Step 0: Bootstrap (install core binaries) ────────────
+if [ "$BOOTSTRAP" = true ]; then
+    info "Bootstrapping core tools..."
+    echo ""
+
+    # Install OpenCode
+    if ! command -v opencode &>/dev/null; then
+        echo "  Installing OpenCode..."
+        curl -fsSL https://opencode.ai/install | bash 2>&1 | tail -3
+        ok "OpenCode installed"
+    else
+        ok "OpenCode already installed: $(opencode --version 2>&1 | head -1)"
+    fi
+
+    # Install Hermes
+    if ! command -v hermes &>/dev/null; then
+        echo "  Installing Hermes..."
+        pip install hermes-agent 2>&1 | tail -3
+        ok "Hermes installed"
+    else
+        ok "Hermes already installed: $(hermes --version 2>&1 | head -1)"
+    fi
+
+    echo ""
+fi
 
 # ── Preflight ────────────────────────────────────────────
 info "Agentic OS — Portable Installer"
@@ -40,7 +81,8 @@ mkdir -p "$OPENCODE_CONFIG_DIR"
 
 # Only copy if source is newer or target doesn't exist
 if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.jsonc" ] || [ "$SCRIPT_DIR/config/opencode.jsonc" -nt "$OPENCODE_CONFIG_DIR/opencode.jsonc" ]; then
-    sed "s|DESIGNLANG_OUTPUT_DIR_PLACEHOLDER|$HOME/design-extract-output|g" \
+    sed -e "s|DESIGNLANG_OUTPUT_DIR_PLACEHOLDER|$HOME/design-extract-output|g" \
+        -e "s|GRAPHIFY_PLUGIN_PATH_PLACEHOLDER|$HOME/.opencode/plugins/graphify.js|g" \
       "$SCRIPT_DIR/config/opencode.jsonc" > "$OPENCODE_CONFIG_DIR/opencode.jsonc"
     ok "opencode.jsonc installed"
 else
@@ -52,6 +94,40 @@ if [ ! -f "$OPENCODE_CONFIG_DIR/oh-my-openagent.json" ] || [ "$SCRIPT_DIR/config
     ok "oh-my-openagent.json installed"
 else
     ok "oh-my-openagent.json already up to date"
+fi
+
+# Activate OhMyOpenAgent plugin
+if command -v opencode &>/dev/null; then
+    if opencode plugin list 2>/dev/null | grep -q "oh-my-openagent"; then
+        ok "OhMyOpenAgent plugin already active"
+    else
+        opencode plugin add oh-my-openagent@latest 2>&1 | tail -1 && \
+            ok "OhMyOpenAgent plugin installed" || \
+            warn "OhMyOpenAgent plugin install failed — add manually: opencode plugin add oh-my-openagent@latest"
+    fi
+else
+    warn "opencode not found — install it first, then: opencode plugin add oh-my-openagent@latest"
+fi
+
+# Install graphify (knowledge graph plugin)
+info "Installing graphify (knowledge graph)..."
+if command -v graphify &>/dev/null; then
+    ok "graphify already installed: $(graphify --version 2>&1 | head -1)"
+else
+    if command -v uv &>/dev/null; then
+        uv tool install graphifyy 2>&1 | tail -3 && \
+            ok "graphify installed via uv" || \
+            warn "graphify install failed — try: uv tool install graphifyy"
+    else
+        warn "uv not found — install graphify manually: uv tool install graphifyy"
+        warn "  (or: pip install graphifyy)"
+    fi
+fi
+# Register the opencode plugin hook
+if command -v graphify &>/dev/null; then
+    graphify install --platform opencode 2>&1 | tail -2 && \
+        ok "graphify opencode hook registered" || \
+        warn "graphify hook registration failed"
 fi
 
 # ── Step 2: Hermes SOUL.md ──────────────────────────────
@@ -234,13 +310,13 @@ if [ -f "$TMUX_CONF_SRC" ]; then
     fi
 fi
 
-# ── Step 10: bashrc additions ─────────────────────────────
-if [ "$1" == "--bashrc" ]; then
-    info "Adding bashrc entries..."
+# ── Step 10: Shell rc additions ────────────────────────────
 
+# bashrc
+if [ "$DOT_BASHRC" = true ]; then
+    info "Adding bashrc entries..."
     BASHRC="$HOME/.bashrc"
     if [ -f "$BASHRC" ]; then
-        # Check if already added
         if grep -q "Agentic OS" "$BASHRC" 2>/dev/null; then
             ok "bashrc already has Agentic OS entries"
         else
@@ -251,10 +327,31 @@ if [ "$1" == "--bashrc" ]; then
         cp "$SCRIPT_DIR/dotfiles/bashrc.sh" "$BASHRC"
         ok ".bashrc created from template"
     fi
-else
+fi
+
+# zshrc
+if [ "$DOT_ZSHRC" = true ]; then
+    info "Adding zshrc entries..."
+    ZSHRC="$HOME/.zshrc"
+    if [ -f "$ZSHRC" ]; then
+        if grep -q "Agentic OS" "$ZSHRC" 2>/dev/null; then
+            ok "zshrc already has Agentic OS entries"
+        else
+            cat "$SCRIPT_DIR/dotfiles/zshrc.sh" >> "$ZSHRC"
+            ok "zshrc entries appended (review with: tail -20 $ZSHRC)"
+        fi
+    else
+        cp "$SCRIPT_DIR/dotfiles/zshrc.sh" "$ZSHRC"
+        ok ".zshrc created from template"
+    fi
+fi
+
+if [ "$DOT_BASHRC" = false ] && [ "$DOT_ZSHRC" = false ]; then
     echo ""
-    info "Skip bashrc. Run with --bashrc to append PATH/tmux entries:"
-    echo "  $0 --bashrc"
+    info "Skip shell rc. Run with --bashrc and/or --zshrc to append entries:"
+    echo "  $0 --bashrc     # for bash users"
+    echo "  $0 --zshrc      # for zsh users"
+    echo "  $0 --bashrc --zshrc  # both"
 fi
 
 # ── Step 11: designlang CLI ───────────────────────────────
@@ -312,7 +409,7 @@ echo -e "${GREEN}  Agentic OS installation complete${NC}"
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
 echo ""
 echo "  What's next:"
-echo "  1. Restart your shell or: source ~/.bashrc"
+echo "  1. Restart your shell or: source ~/.bashrc (or source ~/.zshrc)"
 echo "  2. OpenCode: opencode (starts TUI with OhMyOpenCode)"
 echo "  3. Hermes:   hermes chat (interactive)"
 echo "     Daemon:   hermes-daemon           (24/7 tmux session)"
@@ -338,5 +435,11 @@ echo "  To update config on this machine:"
 echo "    cd ~/agentic-os && git pull && ./install.sh"
 echo ""
 echo "  To clone onto a new machine:"
-echo "    git clone <url> ~/agentic-os && ~/agentic-os/install.sh --bashrc"
+echo "    git clone <url> ~/agentic-os && ~/agentic-os/install.sh --bootstrap --bashrc"
+echo "    # Or for zsh: git clone <url> ~/agentic-os && ~/agentic-os/install.sh --bootstrap --zshrc"
+echo ""
+echo "  Flags (can be combined):"
+echo "    --bootstrap   Install OpenCode + Hermes binaries first"
+echo "    --bashrc      Append Agentic OS config to ~/.bashrc"
+echo "    --zshrc       Append Agentic OS config to ~/.zshrc"
 echo ""
