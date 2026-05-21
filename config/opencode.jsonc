@@ -11,6 +11,12 @@
       "type": "local",
       "command": ["hermes", "mcp", "serve"],
       "enabled": true
+    },
+    "playwright": {
+      "type": "local",
+      "command": ["playwright-mcp"],
+      "args": ["--headless", "--no-sandbox"],
+      "enabled": true
     }
   }
 }
