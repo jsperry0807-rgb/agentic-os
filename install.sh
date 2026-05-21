@@ -91,7 +91,24 @@ else
     bash "$SCRIPT_DIR/wiki/setup.sh"
 fi
 
-# ── Step 4: tmux config ──────────────────────────────────
+# ── Step 4: Playwright browsers ──────────────────────────
+info "Installing Playwright browsers for web research..."
+
+if command -v playwright-mcp &> /dev/null; then
+    # Install browsers using playwright-mcp (handles platform overrides gracefully)
+    PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="${PLAYWRIGHT_HOST_PLATFORM_OVERRIDE:-ubuntu24.04-x64}" \
+      playwright-mcp install-browser 2>&1 | tail -5
+    ok "Playwright browsers installed"
+else
+    warn "playwright-mcp not found — install it: npm install -g @playwright/mcp"
+    warn "  then re-run: playwright-mcp install-browser"
+fi
+
+# Make web-research script executable
+chmod +x "$SCRIPT_DIR/hermes/web-research.js" 2>/dev/null && ok "web-research.js is executable"
+ln -sf "$SCRIPT_DIR/hermes/web-research.js" "$HOME/.local/bin/web-research" 2>/dev/null && ok "web-research symlinked to ~/.local/bin/web-research"
+
+# ── Step 5: tmux config ──────────────────────────────────
 info "Installing tmux config..."
 
 TMUX_CONF_SRC="$SCRIPT_DIR/dotfiles/tmux.conf"
@@ -104,7 +121,7 @@ if [ -f "$TMUX_CONF_SRC" ]; then
     fi
 fi
 
-# ── Step 5: bashrc additions ─────────────────────────────
+# ── Step 6: bashrc additions ─────────────────────────────
 if [ "$1" == "--bashrc" ]; then
     info "Adding bashrc entries..."
 
