@@ -46,6 +46,11 @@ export COMPOSIO_API_KEY="${COMPOSIO_API_KEY:-}"
 # Composio CLI (installed by install.sh)
 export PATH="$HOME/.composio/bin:$PATH"
 
+# designlang — Reverse-engineer any website's design system
+export DESIGNLANG_OUTPUT_DIR="${DESIGNLANG_OUTPUT_DIR:-$HOME/design-extract-output}"
+# designlang needs the same Playwright workaround as our other browser tools
+export DESIGNLANG_PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="${PLAYWRIGHT_HOST_PLATFORM_OVERRIDE:-ubuntu24.04-x64}"
+
 # Auto-start hermes daemon (if not already running)
 if command -v hermes &> /dev/null && [ -n "$PS1" ]; then
     DAEMON_SCRIPT="$HOME/agentic-os/hermes/hermes-daemon.sh"

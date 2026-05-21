@@ -49,6 +49,13 @@
       "type": "local",
       "command": ["npx", "-y", "@agentmemory/mcp"],
       "enabled": true
+    },
+    "designlang": {
+      "type": "local",
+      "command": ["designlang", "mcp"],
+      // DESIGNLANG_OUTPUT_DIR is replaced by install.sh with $HOME/design-extract-output
+      "args": ["--output-dir", "DESIGNLANG_OUTPUT_DIR_PLACEHOLDER"],
+      "enabled": true
     }
   }
 }

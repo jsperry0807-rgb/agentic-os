@@ -40,7 +40,8 @@ mkdir -p "$OPENCODE_CONFIG_DIR"
 
 # Only copy if source is newer or target doesn't exist
 if [ ! -f "$OPENCODE_CONFIG_DIR/opencode.jsonc" ] || [ "$SCRIPT_DIR/config/opencode.jsonc" -nt "$OPENCODE_CONFIG_DIR/opencode.jsonc" ]; then
-    cp "$SCRIPT_DIR/config/opencode.jsonc" "$OPENCODE_CONFIG_DIR/opencode.jsonc"
+    sed "s|DESIGNLANG_OUTPUT_DIR_PLACEHOLDER|$HOME/design-extract-output|g" \
+      "$SCRIPT_DIR/config/opencode.jsonc" > "$OPENCODE_CONFIG_DIR/opencode.jsonc"
     ok "opencode.jsonc installed"
 else
     ok "opencode.jsonc already up to date"
@@ -256,6 +257,40 @@ else
     echo "  $0 --bashrc"
 fi
 
+# ── Step 11: designlang CLI ───────────────────────────────
+info "Installing designlang (website design system extractor)..."
+
+# Create default output directory
+mkdir -p "$HOME/design-extract-output"
+
+if command -v designlang &> /dev/null; then
+    ok "designlang already installed: $(designlang --version 2>&1 | head -1)"
+else
+    PLAYWRIGHT_HOST_PLATFORM_OVERRIDE="${PLAYWRIGHT_HOST_PLATFORM_OVERRIDE:-ubuntu24.04-x64}" \
+      npm install -g designlang 2>&1 | tail -3
+    if command -v designlang &> /dev/null; then
+        ok "designlang installed: $(designlang --version 2>&1 | head -1)"
+    else
+        warn "designlang install failed — try: npm install -g designlang"
+    fi
+fi
+
+# Symlink the built-in OpenCode skill
+SKILL_DIR="$OPENCODE_CONFIG_DIR/skills/designlang"
+if [ ! -e "$SKILL_DIR/SKILL.md" ]; then
+    mkdir -p "$SKILL_DIR"
+    DESIGNLANG_SKILL="$(npm root -g)/designlang/skills/extract-design/SKILL.md"
+    if [ -f "$DESIGNLANG_SKILL" ]; then
+        ln -sf "$DESIGNLANG_SKILL" "$SKILL_DIR/SKILL.md"
+        ok "designlang OpenCode skill installed"
+    fi
+fi
+
+ok "designlang ready. Usage: designlang <url>"
+ok "  Full extraction:  designlang <url> --screenshots --dark --depth 2"
+ok "  Quick tokens:     designlang <url> --json-pretty"
+ok "  MCP server:       designlang mcp --output-dir \$HOME/design-extract-output"
+
 # ── Done ──────────────────────────────────────────────────
 echo ""
 echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
@@ -275,6 +310,9 @@ echo "  6. tmux:     Next terminal will auto-start into tmux"
 echo "  7. Memory:   agentmemory MCP shim auto-connects via 7 core tools"
 echo "     Full server (51 tools): agentmemory (background process)"
 echo "     Viewer:                http://localhost:3113"
+echo "  8. Design:   designlang <url>   (extract design system from any website)"
+echo "     MCP:      designlang mcp --output-dir ~/design-extract-output"
+echo "     Skill:    Ask OpenCode: 'extract design from <url>'"
 echo ""
 echo "  Memory-backed agent handoff active:"
 echo "     Hermes saves session summaries → agentmemory"
