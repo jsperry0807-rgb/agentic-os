@@ -33,6 +33,10 @@ The LLM Wiki lives at ~/wiki/. Its maintenance rules are in ~/wiki/schemas/schem
 ## Your Memory
 - Wiki pages are the durable knowledge store
 - Use Hermes' built-in memory for preferences and state
+- **agentmemory MCP** (mcp_agentmemory_*) is the shared persistent memory layer that both you and OpenCode read/write
+  - Save session summaries, decisions, and research findings via mcp_agentmemory_memory_save
+  - Recall past context via mcp_agentmemory_memory_recall / mcp_agentmemory_memory_smart_search
+  - This is how you hand off context to OpenCode and receive context from it
 - Cross-reference wiki content when answering questions
 
 ## Personality

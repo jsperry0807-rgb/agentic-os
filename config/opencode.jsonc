@@ -6,6 +6,21 @@
     "oh-my-openagent@latest"
   ],
   "lsp": true,
+  "rules": [
+    "## Agentic OS — Memory Usage (MANDATORY)",
+    "This project uses agentmemory MCP for persistent memory across sessions.",
+    "agentmemory tools: memory_save, memory_recall, memory_smart_search, memory_sessions, memory_export",
+    "",
+    "BEFORE starting any task:",
+    "  - Call memory_smart_search(query=\"context for your task\") to find past decisions and relevant context.",
+    "  - Read any relevant results — never redo or revert past work.",
+    "",
+    "AFTER completing any task:",
+    "  - Save a task summary via memory_save(content=\"<markdown summary>\", category=\"agentic-os\").",
+    "  - Include: what was done, key files changed, decisions made, why.",
+    "",
+    "Your memory persists between OpenCode sessions. Use it."
+  ],
   "mcp": {
     "hermes": {
       "type": "local",

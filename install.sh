@@ -104,9 +104,19 @@ else
     warn "  then re-run: playwright-mcp install-browser"
 fi
 
-# Make web-research script executable
-chmod +x "$SCRIPT_DIR/hermes/web-research.js" 2>/dev/null && ok "web-research.js is executable"
-ln -sf "$SCRIPT_DIR/hermes/web-research.js" "$HOME/.local/bin/web-research" 2>/dev/null && ok "web-research symlinked to ~/.local/bin/web-research"
+# Make all hermes scripts executable
+for f in web-research.js hermes-daemon.sh evolution-heartbeat.sh wiki-search.js; do
+    chmod +x "$SCRIPT_DIR/hermes/$f" 2>/dev/null
+done
+ok "hermes scripts are executable"
+
+# Symlink hermes scripts to ~/.local/bin/
+mkdir -p "$HOME/.local/bin"
+ln -sf "$SCRIPT_DIR/hermes/web-research.js" "$HOME/.local/bin/web-research"
+ln -sf "$SCRIPT_DIR/hermes/wiki-search.js" "$HOME/.local/bin/wiki-search"
+ln -sf "$SCRIPT_DIR/hermes/hermes-daemon.sh" "$HOME/.local/bin/hermes-daemon"
+ln -sf "$SCRIPT_DIR/hermes/evolution-heartbeat.sh" "$HOME/.local/bin/evolution-heartbeat"
+ok "scripts symlinked to ~/.local/bin/"
 
 # ── Step 5: agentmemory MCP ──────────────────────────────
 info "Installing agentmemory (persistent memory layer)..."
@@ -145,7 +155,28 @@ else
 fi
 ok "Composio ready. Login with: composio login (or set COMPOSIO_API_KEY for Connect MCP)"
 
-# ── Step 7: tmux config ──────────────────────────────────
+# ── Step 7: Evolution Heartbeat (cron) ────────────────────
+info "Setting up Evolution Heartbeat cron job..."
+
+HEARTBEAT_SCRIPT="$SCRIPT_DIR/hermes/evolution-heartbeat.sh"
+if command -v crontab &> /dev/null; then
+    # Check if already registered
+    if crontab -l 2>/dev/null | grep -q "$HEARTBEAT_SCRIPT"; then
+        ok "Heartbeat cron already registered"
+    else
+        # Add daily at 6am
+        (crontab -l 2>/dev/null || true; echo "0 6 * * * $HEARTBEAT_SCRIPT --research") | crontab -
+        ok "Heartbeat cron registered (daily at 6am — only research, no lint)"
+        warn "Edit the cron schedule: crontab -e"
+        warn "Lint runs on $0 without --research flag — run manually: evolution-heartbeat --lint"
+    fi
+else
+    warn "crontab not available — heartbeat won't auto-schedule"
+    warn "  To run manually: $HEARTBEAT_SCRIPT"
+    warn "  Or add to your own scheduler (systemd timers, launchd, etc.)"
+fi
+
+# ── Step 8: tmux config ──────────────────────────────────
 info "Installing tmux config..."
 
 TMUX_CONF_SRC="$SCRIPT_DIR/dotfiles/tmux.conf"
@@ -158,7 +189,7 @@ if [ -f "$TMUX_CONF_SRC" ]; then
     fi
 fi
 
-# ── Step 8: bashrc additions ─────────────────────────────
+# ── Step 9: bashrc additions ─────────────────────────────
 if [ "$1" == "--bashrc" ]; then
     info "Adding bashrc entries..."
 
@@ -190,12 +221,20 @@ echo ""
 echo "  What's next:"
 echo "  1. Restart your shell or: source ~/.bashrc"
 echo "  2. OpenCode: opencode (starts TUI with OhMyOpenCode)"
-echo "  3. Hermes:   hermes chat (interactive) or hermes gateway run (24/7)"
+echo "  3. Hermes:   hermes chat (interactive)"
+echo "     Daemon:   hermes-daemon           (24/7 tmux session)"
 echo "  4. Wiki:     Start adding sources to ~/wiki/raw/"
-echo "  5. tmux:     Next terminal will auto-start into tmux"
-echo "  6. Memory:   agentmemory MCP shim auto-connects via 7 core tools"
+echo "     Search:   wiki-search \"query\""
+echo "  5. Heartbeat: evolution-heartbeat     (daily research + wiki lint)"
+echo "     Cron:     Runs at 6am — edit with: crontab -e"
+echo "  6. tmux:     Next terminal will auto-start into tmux"
+echo "  7. Memory:   agentmemory MCP shim auto-connects via 7 core tools"
 echo "     Full server (51 tools): agentmemory (background process)"
 echo "     Viewer:                http://localhost:3113"
+echo ""
+echo "  Memory-backed agent handoff active:"
+echo "     Hermes saves session summaries → agentmemory"
+echo "     OpenCode reads past decisions ← agentmemory"
 echo ""
 echo "  To update config on this machine:"
 echo "    cd ~/agentic-os && git pull && ./install.sh"

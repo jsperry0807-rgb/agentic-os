@@ -3,6 +3,9 @@
 # Appended by ~/agentic-os/install.sh
 # ============================================
 
+# Agentic OS scripts
+export PATH="$PATH:$HOME/agentic-os/hermes"
+
 # OpenCode PATH
 export PATH="$HOME/.opencode/bin:$PATH"
 
@@ -37,6 +40,14 @@ export AGENTMEMORY_DATA_DIR="${AGENTMEMORY_DATA_DIR:-$HOME/.agentmemory}"
 export COMPOSIO_API_KEY="${COMPOSIO_API_KEY:-}"
 # Composio CLI (installed by install.sh)
 export PATH="$HOME/.composio/bin:$PATH"
+
+# Auto-start hermes daemon (if not already running)
+if command -v hermes &> /dev/null && [ -n "$PS1" ]; then
+    DAEMON_SCRIPT="$HOME/agentic-os/hermes/hermes-daemon.sh"
+    if [ -f "$DAEMON_SCRIPT" ] && ! tmux has-session -t hermes-daemon 2>/dev/null; then
+        bash "$DAEMON_SCRIPT" start 2>/dev/null
+    fi
+fi
 
 # Auto-start tmux (if not already inside tmux and in an interactive shell)
 if command -v tmux &> /dev/null && [ -z "$TMUX" ] && [ -n "$PS1" ]; then
