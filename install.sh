@@ -108,7 +108,20 @@ fi
 chmod +x "$SCRIPT_DIR/hermes/web-research.js" 2>/dev/null && ok "web-research.js is executable"
 ln -sf "$SCRIPT_DIR/hermes/web-research.js" "$HOME/.local/bin/web-research" 2>/dev/null && ok "web-research symlinked to ~/.local/bin/web-research"
 
-# ── Step 5: Composio CLI ─────────────────────────────────
+# ── Step 5: agentmemory MCP ──────────────────────────────
+info "Installing agentmemory (persistent memory layer)..."
+
+if npm ls -g @agentmemory/agentmemory &>/dev/null; then
+    ok "agentmemory already installed: $(npx -y @agentmemory/agentmemory --version 2>&1 | head -1)"
+else
+    npm install -g @agentmemory/agentmemory 2>&1 | tail -3
+    ok "agentmemory installed (v0.9.21+)"
+fi
+ok "MCP shim ready: npx -y @agentmemory/mcp"
+ok "To start full server (51 tools): agentmemory"
+ok "Data dir: ${AGENTMEMORY_DATA_DIR:-$HOME/.agentmemory}"
+
+# ── Step 6: Composio CLI ─────────────────────────────────
 info "Installing Composio CLI for tool integrations..."
 
 if command -v composio &> /dev/null; then
@@ -132,7 +145,7 @@ else
 fi
 ok "Composio ready. Login with: composio login (or set COMPOSIO_API_KEY for Connect MCP)"
 
-# ── Step 6: tmux config ──────────────────────────────────
+# ── Step 7: tmux config ──────────────────────────────────
 info "Installing tmux config..."
 
 TMUX_CONF_SRC="$SCRIPT_DIR/dotfiles/tmux.conf"
@@ -145,7 +158,7 @@ if [ -f "$TMUX_CONF_SRC" ]; then
     fi
 fi
 
-# ── Step 7: bashrc additions ─────────────────────────────
+# ── Step 8: bashrc additions ─────────────────────────────
 if [ "$1" == "--bashrc" ]; then
     info "Adding bashrc entries..."
 
@@ -180,6 +193,9 @@ echo "  2. OpenCode: opencode (starts TUI with OhMyOpenCode)"
 echo "  3. Hermes:   hermes chat (interactive) or hermes gateway run (24/7)"
 echo "  4. Wiki:     Start adding sources to ~/wiki/raw/"
 echo "  5. tmux:     Next terminal will auto-start into tmux"
+echo "  6. Memory:   agentmemory MCP shim auto-connects via 7 core tools"
+echo "     Full server (51 tools): agentmemory (background process)"
+echo "     Viewer:                http://localhost:3113"
 echo ""
 echo "  To update config on this machine:"
 echo "    cd ~/agentic-os && git pull && ./install.sh"

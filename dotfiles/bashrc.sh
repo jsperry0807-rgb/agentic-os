@@ -25,6 +25,13 @@ if [ -d "$FIREFOX_LIB_DIR/libnspr4.so" ] && [[ ":$LD_LIBRARY_PATH:" != *":$FIREF
 fi
 unset FIREFOX_LIB_DIR
 
+# agentmemory — Persistent MCP Memory Layer
+# Shared memory for OpenCode, Hermes, and any MCP-compatible agent
+export AGENTMEMORY_DATA_DIR="${AGENTMEMORY_DATA_DIR:-$HOME/.agentmemory}"
+# To run the full server (51 tools): agentmemory
+# Or in a tmux window: tmux new -d -s agentmemory 'agentmemory'
+# The MCP shim (7 tools fallback) works without the server running.
+
 # Composio — Tool Integrations for AI Agents
 # Get your API key at https://dashboard.composio.dev (Settings → API Keys)
 export COMPOSIO_API_KEY="${COMPOSIO_API_KEY:-}"
